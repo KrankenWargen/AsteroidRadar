@@ -39,12 +39,37 @@ class MainFragment : Fragment() {
 
         viewModel.asteroid.observe(viewLifecycleOwner, Observer {
             it?.let {
+
+                adapter.submitList(it)
+            }
+        })
+        viewModel.weekly.observe(viewLifecycleOwner, Observer {
+
+            it?.let {
+
+                adapter.submitList(it)
+            }
+        })
+        viewModel.today.observe(viewLifecycleOwner, Observer {
+
+            it?.let {
+
+                adapter.submitList(it)
+            }
+        })
+        viewModel.saved.observe(viewLifecycleOwner, Observer {
+
+            it?.let {
+
                 adapter.submitList(it)
             }
         })
         viewModel.navigateToDetailFragment.observe(viewLifecycleOwner, Observer {
             findNavController().navigate(MainFragmentDirections.actionShowDetail(it))
         })
+
+
+
 
         setHasOptionsMenu(true)
 
@@ -57,6 +82,11 @@ class MainFragment : Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.show_weekly -> viewModel.showWeekly()
+            R.id.show_today -> viewModel.showToday()
+            R.id.show_saved -> viewModel.showSaved()
+        }
         return true
     }
 }

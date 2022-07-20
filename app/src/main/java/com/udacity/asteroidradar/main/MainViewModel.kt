@@ -14,6 +14,7 @@ import com.udacity.asteroidradar.database.AsteroidDatabaseDao
 import com.udacity.asteroidradar.database.AsteroidTable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Response
@@ -35,8 +36,17 @@ class MainViewModel(
         _navigateToDetailFragment.value = null
     }
 
+    private val _weekly = MutableLiveData<List<AsteroidTable>>()
+    val weekly: LiveData<List<AsteroidTable>>
+        get() = _weekly
 
-    val asteroids = database.getAllAsteroids()
+    private val _today = MutableLiveData<List<AsteroidTable>>()
+    val today: LiveData<List<AsteroidTable>>
+        get() = _today
+
+    private val _saved = MutableLiveData<List<AsteroidTable>>()
+    val saved: LiveData<List<AsteroidTable>>
+        get() = _saved
 
 
     private val _asteroid = MutableLiveData<ArrayList<AsteroidTable>>()
@@ -48,6 +58,7 @@ class MainViewModel(
         get() = _image
 
     init {
+
         initializeAsteroids()
     }
 
@@ -68,6 +79,7 @@ class MainViewModel(
         PlanetsApi.retrofitService.getAsteroids(Constants.URL_PLANETS)
             .enqueue(object : retrofit2.Callback<String> {
                 override fun onFailure(call: Call<String>, t: Throwable) {
+                    Log.i("MainViewModel", "Failure")
 
                 }
 
@@ -88,6 +100,43 @@ class MainViewModel(
     fun insertAll(asteroidsList: ArrayList<AsteroidTable>) {
         viewModelScope.launch(Dispatchers.Default) {
             database.insertAll(*asteroidsList.toTypedArray())
+        }
+
+    }
+
+    fun showWeekly() {
+        viewModelScope.launch(Dispatchers.Default) {
+            var temp = database.getAsteroidsWeekly(Constants.START_DATE)
+            withContext(Dispatchers.Main)
+            {
+                _weekly.value = temp
+            }
+
+
+        }
+    }
+
+    fun showToday() {
+        viewModelScope.launch(Dispatchers.Default) {
+            var temp = database.getAsteroidsToday(Constants.START_DATE)
+            withContext(Dispatchers.Main)
+            {
+                _today.value = temp
+            }
+
+
+        }
+    }
+
+    fun showSaved() {
+        viewModelScope.launch(Dispatchers.Default) {
+            var temp = database.getAsteroidsSaved()
+            withContext(Dispatchers.Main)
+            {
+                _saved.value = temp
+            }
+
+
         }
     }
 
