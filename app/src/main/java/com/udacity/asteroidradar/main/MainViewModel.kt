@@ -80,7 +80,7 @@ class MainViewModel(
             .enqueue(object : retrofit2.Callback<String> {
                 override fun onFailure(call: Call<String>, t: Throwable) {
                     Log.i("MainViewModel", "Failure")
-
+                    showSaved()
                 }
 
                 override fun onResponse(
