@@ -20,6 +20,7 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.udacity.asteroidradar.database.AsteroidDatabaseDao
+import com.udacity.asteroidradar.database.PicOfDayDatabaseDao
 
 /**
  * This is pretty much boiler plate code for a ViewModel Factory.
@@ -28,11 +29,11 @@ import com.udacity.asteroidradar.database.AsteroidDatabaseDao
  */
 class MainViewModelFactory(
         private val dataSource: AsteroidDatabaseDao,
-        private val application: Application) : ViewModelProvider.Factory {
+        private val picOfDayDatabaseDao: PicOfDayDatabaseDao) : ViewModelProvider.Factory {
     @Suppress("unchecked_cast")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            return MainViewModel(dataSource, application) as T
+            return MainViewModel(dataSource,picOfDayDatabaseDao) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

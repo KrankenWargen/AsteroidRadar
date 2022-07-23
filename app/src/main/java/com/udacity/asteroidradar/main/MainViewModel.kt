@@ -1,27 +1,22 @@
 package com.udacity.asteroidradar.main
 
-import android.app.Application
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.PictureOfDay
-import com.udacity.asteroidradar.api.PlanetsApi
-import com.udacity.asteroidradar.api.parseAsteroidsJsonResult
 import com.udacity.asteroidradar.database.AsteroidDatabaseDao
 import com.udacity.asteroidradar.database.AsteroidTable
+import com.udacity.asteroidradar.database.PicOfDayDatabaseDao
+import com.udacity.asteroidradar.repository.AsteroidsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Response
 
 class MainViewModel(
     val database: AsteroidDatabaseDao,
-    application: Application
+    val picOfDayDatabase: PicOfDayDatabaseDao
 ) : ViewModel() {
 
     private val _navigateToDetailFragment = MutableLiveData<AsteroidTable>()
@@ -63,38 +58,28 @@ class MainViewModel(
     }
 
     private fun initializeAsteroids() {
-        PlanetsApi.retrofitService.getPicDay(Constants.URL_PIC_DAY)
-            .enqueue(object : retrofit2.Callback<PictureOfDay> {
-                override fun onFailure(call: Call<PictureOfDay>, t: Throwable) {
-                }
 
-                override fun onResponse(
-                    call: Call<PictureOfDay>,
-                    response: Response<PictureOfDay>
-                ) {
-                    _image.value = response.body()
-                }
-            })
+        viewModelScope.launch(Dispatchers.Default) {
+            val asteroidReository: AsteroidsRepository =
+                AsteroidsRepository(database, picOfDayDatabase)
+            asteroidReository.refreshPicOfDay()
+            asteroidReository.refreshAsteroids()
+        }
 
-        PlanetsApi.retrofitService.getAsteroids(Constants.URL_PLANETS)
-            .enqueue(object : retrofit2.Callback<String> {
-                override fun onFailure(call: Call<String>, t: Throwable) {
-                    Log.i("MainViewModel", "Failure")
-                    showSaved()
-                }
+//        PlanetsApi.retrofitService.getPicDay(Constants.URL_PIC_DAY)
+//            .enqueue(object : retrofit2.Callback<PictureOfDay> {
+//                override fun onFailure(call: Call<PictureOfDay>, t: Throwable) {
+//                }
+//
+//                override fun onResponse(
+//                    call: Call<PictureOfDay>,
+//                    response: Response<PictureOfDay>
+//                ) {
+//                    _image.value = response.body()
+//                }
+//            })
 
-                override fun onResponse(
-                    call: Call<String>,
-                    response: Response<String>
-                ) {
-                    Log.i("MainViewModel", "Success")
-                    var obj = JSONObject(response.body())
-                    var asteroidsList: ArrayList<AsteroidTable> = parseAsteroidsJsonResult(obj)
-                    insertAll(asteroidsList)
 
-                    _asteroid.value = asteroidsList
-                }
-            })
     }
 
     fun insertAll(asteroidsList: ArrayList<AsteroidTable>) {

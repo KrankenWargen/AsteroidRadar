@@ -5,8 +5,8 @@
     <data>
 
         <variable
-            name="viewModel"
-            type="com.udacity.asteroidradar.main.MainViewModel" />
+            name="latestImage"
+            type="com.udacity.asteroidradar.database.PicOfDayTable" />
 
     </data>
 
@@ -28,9 +28,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:adjustViewBounds="true"
-                android:contentDescription="@{viewModel.image.title}"
+                android:contentDescription="@{latestImage.title}"
                 android:scaleType="centerCrop"
-                app:imageUrl="@{viewModel.image.url}" />
+                app:imageUrl="@{latestImage.url}" />
 
             <TextView
                 android:id="@+id/textView"
@@ -39,7 +39,7 @@
                 android:layout_gravity="bottom"
                 android:background="#55010613"
                 android:padding="16dp"
-                android:text="@{viewModel.image.title}"
+                android:text="@{latestImage.title}"
                 android:textColor="@android:color/white"
                 android:textSize="20sp"
                 android:textStyle="bold" />

@@ -6,9 +6,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.database.AsteroidDatabase
+import com.udacity.asteroidradar.database.PicOfDayDatabase
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainFragment : Fragment() {
 
@@ -21,7 +26,9 @@ class MainFragment : Fragment() {
         val binding = FragmentMainBinding.inflate(inflater)
         val application = requireNotNull(this.activity).application
         val database = AsteroidDatabase.getInstance(application).asteroidDatabaseDao
-        val viewModelFactory = MainViewModelFactory(database, application)
+        val picOfDayDatabase = PicOfDayDatabase.getInstance(application).picOfDayDatabaseDao
+        val viewModelFactory = MainViewModelFactory(database,picOfDayDatabase)
+        val applicationScope = CoroutineScope(Dispatchers.Default)
 
         viewModel = ViewModelProvider(this, viewModelFactory).get(MainViewModel::class.java)
 
@@ -32,17 +39,15 @@ class MainFragment : Fragment() {
         })
         binding.lifecycleOwner = this
 
-        binding.viewModel = viewModel
-
 
         binding.asteroidRecycler.adapter = adapter
 
-        viewModel.asteroid.observe(viewLifecycleOwner, Observer {
-            it?.let {
+        applicationScope.launch (Dispatchers.Default) {
+            binding.latestImage = picOfDayDatabase.getLatestPic()
+            adapter.submitList(database.getAsteroidsWeekly(Constants.START_DATE))
+        }
 
-                adapter.submitList(it)
-            }
-        })
+
         viewModel.weekly.observe(viewLifecycleOwner, Observer {
 
             it?.let {
