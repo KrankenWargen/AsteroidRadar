@@ -6,14 +6,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.database.AsteroidDatabase
 import com.udacity.asteroidradar.database.PicOfDayDatabase
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MainFragment : Fragment() {
 
@@ -27,26 +25,22 @@ class MainFragment : Fragment() {
         val application = requireNotNull(this.activity).application
         val database = AsteroidDatabase.getInstance(application).asteroidDatabaseDao
         val picOfDayDatabase = PicOfDayDatabase.getInstance(application).picOfDayDatabaseDao
-        val viewModelFactory = MainViewModelFactory(database,picOfDayDatabase)
+        val viewModelFactory = MainViewModelFactory(database, picOfDayDatabase)
         val applicationScope = CoroutineScope(Dispatchers.Default)
 
         viewModel = ViewModelProvider(this, viewModelFactory).get(MainViewModel::class.java)
-
+        binding.lifecycleOwner = this
 
         val adapter = MainViewAdapter(MainViewAdapter.AsteroidListener {
 
             viewModel.onAsteroidClicked(it)
         })
-        binding.lifecycleOwner = this
-
-
         binding.asteroidRecycler.adapter = adapter
 
-        applicationScope.launch (Dispatchers.Default) {
-            binding.latestImage = picOfDayDatabase.getLatestPic()
-            adapter.submitList(database.getAsteroidsWeekly(Constants.START_DATE))
-        }
+        viewModel.image.observe(viewLifecycleOwner, Observer {
 
+            binding.latestImage = it
+        })
 
         viewModel.weekly.observe(viewLifecycleOwner, Observer {
 
@@ -74,8 +68,8 @@ class MainFragment : Fragment() {
         })
 
 
-
-
+        viewModel.showPicOfDay()
+        viewModel.showWeekly()
         setHasOptionsMenu(true)
 
         return binding.root

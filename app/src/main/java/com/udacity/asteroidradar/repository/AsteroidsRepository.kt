@@ -18,6 +18,7 @@
 package com.udacity.asteroidradar.repository
 
 import com.udacity.asteroidradar.Constants
+import com.udacity.asteroidradar.PictureOfDay
 import com.udacity.asteroidradar.api.PlanetsApi
 import com.udacity.asteroidradar.api.parseAsteroidsJsonResult
 import com.udacity.asteroidradar.database.AsteroidDatabaseDao
@@ -27,6 +28,8 @@ import com.udacity.asteroidradar.database.PicOfDayTable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Response
 import retrofit2.await
 
 class AsteroidsRepository(
@@ -36,20 +39,44 @@ class AsteroidsRepository(
 
 
     suspend fun refreshAsteroids() {
-        withContext(Dispatchers.IO) {
-            val asteroids = PlanetsApi.retrofitService.getAsteroids(Constants.URL_PLANETS).await()
-            var obj = JSONObject(asteroids)
-            var asteroidsList: ArrayList<AsteroidTable> = parseAsteroidsJsonResult(obj)
-            database.insertAll(*asteroidsList.toTypedArray())
 
-        }
+        PlanetsApi.retrofitService.getAsteroids(Constants.URL_PLANETS)
+            .enqueue(object : retrofit2.Callback<String> {
+                override fun onFailure(call: Call<String>, t: Throwable) {
+
+                }
+
+                override fun onResponse(
+                    call: Call<String>,
+                    response: Response<String>
+                ) {
+
+                    var obj = JSONObject(response.body())
+                    var asteroidsList: ArrayList<AsteroidTable> = parseAsteroidsJsonResult(obj)
+                    database.insertAll(*asteroidsList.toTypedArray())
+                }
+            })
+
+
     }
 
     suspend fun refreshPicOfDay() {
-        withContext(Dispatchers.Default) {
-            val picOfDay = PlanetsApi.retrofitService.getPicDay(Constants.URL_PIC_DAY).await()
-            database_pod.insert(PicOfDayTable(picOfDay.url, picOfDay.title, picOfDay.date))
+        PlanetsApi.retrofitService.getPicDay(Constants.URL_PIC_DAY)
+            .enqueue(object : retrofit2.Callback<PictureOfDay> {
+                override fun onFailure(call: Call<PictureOfDay>, t: Throwable) {
 
-        }
+                }
+
+                override fun onResponse(
+                    call: Call<PictureOfDay>,
+                    response: Response<PictureOfDay>
+                ) {
+                    val picOfDay = response.body()
+                    if (picOfDay != null) {
+                        database_pod.insert(PicOfDayTable(picOfDay.url, picOfDay.title, picOfDay.date))
+                    }
+                }
+            })
+
     }
 }

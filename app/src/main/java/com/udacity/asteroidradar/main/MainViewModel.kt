@@ -5,11 +5,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.udacity.asteroidradar.Constants
-import com.udacity.asteroidradar.PictureOfDay
 import com.udacity.asteroidradar.database.AsteroidDatabaseDao
 import com.udacity.asteroidradar.database.AsteroidTable
 import com.udacity.asteroidradar.database.PicOfDayDatabaseDao
+import com.udacity.asteroidradar.database.PicOfDayTable
 import com.udacity.asteroidradar.repository.AsteroidsRepository
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,8 +49,8 @@ class MainViewModel(
     val asteroid: LiveData<ArrayList<AsteroidTable>>
         get() = _asteroid
 
-    private val _image = MutableLiveData<PictureOfDay>()
-    val image: LiveData<PictureOfDay>
+    private val _image = MutableLiveData<PicOfDayTable>()
+    val image: LiveData<PicOfDayTable>
         get() = _image
 
     init {
@@ -59,35 +60,34 @@ class MainViewModel(
 
     private fun initializeAsteroids() {
 
-        viewModelScope.launch(Dispatchers.Default) {
-            val asteroidReository: AsteroidsRepository =
-                AsteroidsRepository(database, picOfDayDatabase)
-            asteroidReository.refreshPicOfDay()
+        val asteroidReository: AsteroidsRepository =
+            AsteroidsRepository(database, picOfDayDatabase)
+        val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            throwable.printStackTrace()
+        }
+        viewModelScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
+
             asteroidReository.refreshAsteroids()
         }
 
-//        PlanetsApi.retrofitService.getPicDay(Constants.URL_PIC_DAY)
-//            .enqueue(object : retrofit2.Callback<PictureOfDay> {
-//                override fun onFailure(call: Call<PictureOfDay>, t: Throwable) {
-//                }
-//
-//                override fun onResponse(
-//                    call: Call<PictureOfDay>,
-//                    response: Response<PictureOfDay>
-//                ) {
-//                    _image.value = response.body()
-//                }
-//            })
+        viewModelScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
 
-
-    }
-
-    fun insertAll(asteroidsList: ArrayList<AsteroidTable>) {
-        viewModelScope.launch(Dispatchers.Default) {
-            database.insertAll(*asteroidsList.toTypedArray())
+            asteroidReository.refreshPicOfDay()
         }
 
+
     }
+
+    fun showPicOfDay() {
+        viewModelScope.launch(Dispatchers.Default) {
+            var temp = picOfDayDatabase.getLatestPic()
+            withContext(Dispatchers.Main)
+            {
+                _image.value = temp
+            }
+        }
+    }
+
 
     fun showWeekly() {
         viewModelScope.launch(Dispatchers.Default) {
